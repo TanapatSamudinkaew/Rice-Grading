@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 
 # นำเข้าฟังก์ชัน process_rice_logic จากไฟล์ rice_logic.py ที่เราเพิ่งสร้าง
-from rice_logic import process_rice_logic
+from riceimg_logic import process_rice_logic
 
 # --- Streamlit UI Configuration ---
 st.set_page_config(page_title="Rice Grading AI", layout="wide")
