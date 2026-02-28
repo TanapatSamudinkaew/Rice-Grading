@@ -30,28 +30,32 @@ with st.sidebar:
     
     st.divider()
     st.subheader("📷 ตั้งค่ากล้อง")
-    cam_index = st.selectbox("เลือกแหล่งที่มาของกล้อง", [0, 1, 2, 3], index=0, 
-                             help="0: กล้องหลัก, 1-3: กล้องแยก/Iriun")
+    cam_index = st.selectbox("เลือกแหล่งที่มาของกล้อง", [0, 1, 2, 3], index=0)
+    
+    st.divider()
+    st.subheader("🎨 ปรับจูนแสงและสี (HSV)")
+    # ปรับค่าตามทฤษฎี (H: 20-40, S: 40-255, V: 150-255)
+    h_range = st.slider("ช่วงเฉดสี (Hue)", 0, 180, (20, 40), help="OpenCV Hue มีค่า 0-180")
+    s_range = st.slider("ความสดของสี (Saturation)", 0, 255, (40, 255))
+    v_range = st.slider("ความสว่าง (Value)", 0, 255, (150, 255))
     
     st.divider()
     st.subheader("⚙️ ตั้งค่าการวิเคราะห์")
     dist_threshold = st.slider("ความละเอียดในการแยกเมล็ด", 0.1, 0.9, 0.4)
-    yellow_threshold = st.slider("ความไวการตรวจเมล็ดเสีย", 0.05, 0.5, 0.12)
+    yellow_threshold = st.slider("ความไวการตรวจเมล็ดเสีย", 0.01, 0.50, 0.12)
 
 # --- Main Dashboard ---
 st.title("Rice Quality Dashboard")
 col_main, col_stats = st.columns([3, 1])
 
-# ฟังก์ชันสำหรับกรองเอาเฉพาะ Pass/Fail มาโชว์
 def display_filtered_stats(stats_dict):
-    # รวมกลุ่มถ้ามีคีย์อื่นหลุดมา หรือแสดงเฉพาะที่มี
     pass_count = stats_dict.get("Pass", stats_dict.get("Good", 0))
     fail_count = stats_dict.get("Fail", 0)
     
-    # ถ้าใน logic มี Broken/Spoiled ให้รวมเข้า Fail ไปเลยเพื่อความง่าย
-    if "Broken" in stats_dict: fail_count += stats_dict["Broken"]
-    if "Spoiled" in stats_dict: fail_count += stats_dict["Spoiled"]
-    if "Foreign" in stats_dict: fail_count += stats_dict["Foreign"]
+    # รวมทุกอย่างที่ไม่ใช่ข้าวดีเข้า Fail
+    additional_fails = ["Broken", "Spoiled", "Foreign"]
+    for key in additional_fails:
+        fail_count += stats_dict.get(key, 0)
 
     st.metric("จำนวนเมล็ดทั้งหมด", pass_count + fail_count)
     st.write(f"✅ **ผ่านเกณฑ์ (Pass):** {pass_count}")
@@ -66,7 +70,8 @@ if app_mode == "📤 อัปโหลดรูปภาพ":
     if uploaded_file:
         img = Image.open(uploaded_file)
         img_bgr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-        res_img, stats = process_rice_logic(img_bgr, dist_threshold, yellow_threshold)
+        # ส่งค่า HSV และ Threshold เข้าไปประมวลผล
+        res_img, stats = process_rice_logic(img_bgr, h_range, s_range, v_range, yellow_threshold)
         
         with col_main:
             st.image(cv2.cvtColor(res_img, cv2.COLOR_BGR2RGB), use_container_width=True)
@@ -98,7 +103,8 @@ else:
                 ret, frame = cap.read()
                 if not ret: break
                 
-                res_img, stats = process_realtime(frame, dist_threshold, yellow_threshold)
+                # ส่งค่าจาก Slider เข้าไปในฟังก์ชัน realtime
+                res_img, stats = process_realtime(frame, h_range, s_range, v_range, yellow_threshold)
                 img_placeholder.image(cv2.cvtColor(res_img, cv2.COLOR_BGR2RGB), use_container_width=True)
                 
                 with st_metrics.container():
@@ -106,4 +112,4 @@ else:
                 
             cap.release()
     else:
-        img_placeholder.info(f"เลือกกล้องที่ Index: {cam_index} และกดเปิดใช้งาน")
+        img_placeholder.info(f"จูนค่าสีทางซ้ายมือ และกดเปิดกล้องเพื่อเริ่มวิเคราะห์")
