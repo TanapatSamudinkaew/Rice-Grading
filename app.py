@@ -92,7 +92,7 @@ else:
     img_placeholder = col_main.empty()
 
     if run_camera:
-        cap = cv2.VideoCapture(cam_index, cv2.CAP_DSHOW)
+        cap = cv2.VideoCapture(cam_index)
         if not cap.isOpened():
             st.error(f"❌ ไม่สามารถเปิดกล้อง Index {cam_index} ได้")
         else:
