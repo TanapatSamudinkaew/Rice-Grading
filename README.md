@@ -1,4 +1,3 @@
-!!Important Things
 background must be black only!!!
     
     🌾 Rice Quality Inspection AI (Web App)
