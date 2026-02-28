@@ -1,3 +1,6 @@
+!!Important Things
+background must be black only!!!
+    
     🌾 Rice Quality Inspection AI (Web App)
 A real-time computer vision solution designed to automate the quality control and grading of rice grains. This application utilizes OpenCV for advanced image processing and Streamlit for an interactive, web-based user interface. The system classifies rice grains into four distinct categories: Good, Broken, Spoiled (Yellowed), and Foreign Objects.
 
