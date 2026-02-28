@@ -1,11 +1,10 @@
 import cv2
 import numpy as np
 
-# --- ฟังก์ชันหลักในการประมวลผล (Core Logic) ---
 def process_rice_logic(img, dist_val=0.4, yellow_sens=0.12):
     original = img.copy()
     
-    # 1. White Balance
+    # 1. White Balance (LAB)
     lab = cv2.cvtColor(img, cv2.COLOR_BGR2LAB)
     l, a, b = cv2.split(lab)
     l_f, a_f, b_f = l.astype(np.float32), a.astype(np.float32), b.astype(np.float32)
@@ -17,29 +16,32 @@ def process_rice_logic(img, dist_val=0.4, yellow_sens=0.12):
                      np.clip(b_f,0,255).astype(np.uint8)])
     img_wb = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
 
-    # 2. Pre-processing & Watershed
+    # 2. Pre-processing
     gray = cv2.cvtColor(img_wb, cv2.COLOR_BGR2GRAY)
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
     gray = clahe.apply(gray)
     blur = cv2.bilateralFilter(gray, 9, 75, 75)
-    thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 51, 2)
     
+    # 3. Segmentation (Watershed)
+    thresh = cv2.adaptiveThreshold(blur, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 51, 2)
     kernel = np.ones((3,3), np.uint8)
     opening = cv2.morphologyEx(thresh, cv2.MORPH_OPEN, kernel, 2)
     sure_bg = cv2.dilate(opening, kernel, 3)
     dist = cv2.distanceTransform(opening, cv2.DIST_L2, 5)
     _, sure_fg = cv2.threshold(dist, dist_val * dist.max(), 255, 0)
+    sure_fg = np.uint8(sure_fg)
+    unknown = cv2.subtract(sure_bg, sure_fg)
     
-    unknown = cv2.subtract(sure_bg, np.uint8(sure_fg))
-    _, markers = cv2.connectedComponents(np.uint8(sure_fg))
+    _, markers = cv2.connectedComponents(sure_fg)
     markers = markers + 1
     markers[unknown == 255] = 0
     markers = cv2.watershed(original, markers)
 
-    # 3. Color & Shape Analysis
+    # 4. Color Mask (Spoiled)
     hsv = cv2.cvtColor(img_wb, cv2.COLOR_BGR2HSV)
     yellow_mask = cv2.inRange(hsv, np.array([18, 40, 120]), np.array([40, 255, 255]))
-    
+
+    # 5. Analysis
     stats = {"Good": 0, "Broken": 0, "Spoiled": 0, "Foreign": 0}
     
     for label in np.unique(markers):
@@ -51,20 +53,7 @@ def process_rice_logic(img, dist_val=0.4, yellow_sens=0.12):
         if contours:
             c = max(contours, key=cv2.contourArea)
             area = cv2.contourArea(c)
-            
-            # --- [ส่วนที่แก้ไข] เพิ่มเงื่อนไขการกรองวัตถุที่เข้มงวดขึ้น ---
-            
-            # 1. กรองขนาด: ลดขนาดสูงสุดลงเพื่อตัดกำแพง/เฟอร์นิเจอร์ (จาก 8000 เหลือ 3000)
-            if area < 120 or area > 3000: continue
-            
-            # 2. กรองความทึบ (Solidity): ตัดรูปทรงแปลกๆ แหว่งๆ ที่ไม่ใช่เมล็ดข้าว
-            hull = cv2.convexHull(c)
-            hull_area = cv2.contourArea(hull)
-            if hull_area == 0: continue
-            solidity = float(area) / hull_area
-            if solidity < 0.75: continue # เมล็ดข้าวควรมีความทึบสูงกว่า 75%
-            
-            # ----------------------------------------------------
+            if area < 100: continue
 
             x, y, w, h = cv2.boundingRect(c)
             peri = cv2.arcLength(c, True)
@@ -75,7 +64,7 @@ def process_rice_logic(img, dist_val=0.4, yellow_sens=0.12):
                 text, color, key = "Broken", (0, 0, 255), "Broken"
             elif yellow_ratio > yellow_sens:
                 text, color, key = "Spoiled", (0, 165, 255), "Spoiled"
-            elif circularity > 0.7:
+            elif circularity > 0.75:
                 text, color, key = "Foreign", (255, 0, 0), "Foreign"
             else:
                 text, color, key = "Good", (0, 255, 0), "Good"
