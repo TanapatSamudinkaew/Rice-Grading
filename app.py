@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image
 
 # นำเข้า Logic
-from riceimg_logic import process_rice_logic
+from rice_logic import process_rice_image
 from ricerealtime_logic import process_rice_logic as process_realtime
 
 # --- UI Configuration ---
@@ -71,7 +71,7 @@ if app_mode == "📤 อัปโหลดรูปภาพ":
         img = Image.open(uploaded_file)
         img_bgr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
         # ส่งค่า HSV และ Threshold เข้าไปประมวลผล
-        res_img, stats = process_rice_logic(img_bgr, h_range, s_range, v_range, yellow_threshold)
+        res_img, stats = process_rice_image(img_bgr, h_range, s_range, v_range, yellow_threshold)
         
         with col_main:
             st.image(cv2.cvtColor(res_img, cv2.COLOR_BGR2RGB), use_container_width=True)
