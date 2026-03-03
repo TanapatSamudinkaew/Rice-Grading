@@ -25,7 +25,7 @@ st.markdown("""
 
 # --- Sidebar ---
 with st.sidebar:
-    st.title("🌾 Rice Grading System")
+    st.title(" Rice Detect System")
     app_mode = st.selectbox("เลือกโหมดการทำงาน", ["📤 อัปโหลดรูปภาพ", "📷 กล้องสด (Real-time)"])
     
     st.divider()
@@ -35,17 +35,17 @@ with st.sidebar:
     st.divider()
     st.subheader("🎨 ปรับจูนแสงและสี (HSV)")
     # ปรับค่าตามทฤษฎี (H: 20-40, S: 40-255, V: 150-255)
-    h_range = st.slider("ช่วงเฉดสี (Hue)", 0, 180, (20, 40), help="OpenCV Hue มีค่า 0-180")
+    h_range = st.slider("ช่วงเฉดสี (Hue)", 0, 180, (20, 40), help="สนใจสีโทนไหน OpenCV Hue มีค่า 0-180")
     s_range = st.slider("ความสดของสี (Saturation)", 0, 255, (40, 255))
     v_range = st.slider("ความสว่าง (Value)", 0, 255, (150, 255))
     
     st.divider()
     st.subheader("⚙️ ตั้งค่าการวิเคราะห์")
     dist_threshold = st.slider("ความละเอียดในการแยกเมล็ด", 0.1, 0.9, 0.4)
-    yellow_threshold = st.slider("ความไวการตรวจเมล็ดเสีย", 0.01, 0.50, 0.12)
+    ##yellow_threshold = st.slider("ความไวการตรวจเมล็ดเสีย", 0.01, 0.50, 0.12) ##
 
 # --- Main Dashboard ---
-st.title("Rice Quality Dashboard")
+st.title("Rice Detection Dashboard")
 col_main, col_stats = st.columns([3, 1])
 
 def display_filtered_stats(stats_dict):
@@ -71,7 +71,7 @@ if app_mode == "📤 อัปโหลดรูปภาพ":
         img = Image.open(uploaded_file)
         img_bgr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
         # ส่งค่า HSV และ Threshold เข้าไปประมวลผล
-        res_img, stats = process_rice_image(img_bgr, h_range, s_range, v_range, yellow_threshold)
+        res_img, stats = process_rice_image(img_bgr, dist_threshold)
         
         with col_main:
             st.image(cv2.cvtColor(res_img, cv2.COLOR_BGR2RGB), use_container_width=True)
