@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-# --- พารามิเตอร์ช่วงสีสำหรับการคัดแยก (ปรับแต่งได้) ---
+
 # 1. ช่วงสีแดงสำหรับจับพื้นที่ถาด (HSV แยกเป็น 2 ช่วงเพราะสีแดงอยู่ตรงขอบสเกล)
 lower_red1 = np.array([0, 70, 50])
 upper_red1 = np.array([10, 255, 255])
@@ -63,11 +63,11 @@ def process_rice_image(img, dist_val=0.4):
 
     for c in contours_rice:
         area = cv2.contourArea(c)
-        # กรอง 1: ขนาด (อิงภาพ 800px)
         if area < 300 or area > 4000: 
             continue
 
         # กรอง 2: ความทึบ ตัดคีมคีบและข้าวที่แหว่งมากๆ
+        # ถ้ารูปร่างไม่แน่นพอ (solidity ต่ำกว่า 0.75) ให้ข้ามวัตถุนั้นไปเลย
         hull = cv2.convexHull(c)
         hull_area = cv2.contourArea(hull)
         if hull_area == 0: continue

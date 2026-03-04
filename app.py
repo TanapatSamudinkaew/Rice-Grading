@@ -34,15 +34,13 @@ with st.sidebar:
     
     st.divider()
     st.subheader("🎨 ปรับจูนแสงและสี (HSV)")
-    # ปรับค่าตามทฤษฎี (H: 20-40, S: 40-255, V: 150-255)
-    h_range = st.slider("ช่วงเฉดสี (Hue)", 0, 180, (20, 40), help="สนใจสีโทนไหน OpenCV Hue มีค่า 0-180")
+    h_range = st.slider("ช่วงเฉดสี (Hue)", 0, 180, (20, 40))
     s_range = st.slider("ความสดของสี (Saturation)", 0, 255, (40, 255))
     v_range = st.slider("ความสว่าง (Value)", 0, 255, (150, 255))
     
     st.divider()
     st.subheader("⚙️ ตั้งค่าการวิเคราะห์")
     dist_threshold = st.slider("ความละเอียดในการแยกเมล็ด", 0.1, 0.9, 0.4)
-    ##yellow_threshold = st.slider("ความไวการตรวจเมล็ดเสีย", 0.01, 0.50, 0.12) ##
 
 # --- Main Dashboard ---
 st.title("Rice Detection Dashboard")
@@ -52,14 +50,13 @@ def display_filtered_stats(stats_dict):
     pass_count = stats_dict.get("Pass", stats_dict.get("Good", 0))
     fail_count = stats_dict.get("Fail", 0)
     
-    # รวมทุกอย่างที่ไม่ใช่ข้าวดีเข้า Fail
     additional_fails = ["Broken", "Spoiled", "Foreign"]
     for key in additional_fails:
         fail_count += stats_dict.get(key, 0)
 
     st.metric("จำนวนเมล็ดทั้งหมด", pass_count + fail_count)
     st.write(f"✅ **ผ่านเกณฑ์ (Pass):** {pass_count}")
-    st.write(f"❌ **ไม่ผ่านเกณฑ์ (Fail):** {fail_count}")
+    ##st.write(f"❌ **ไม่ผ่านเกณฑ์ (Fail):** {fail_count}")
 
 # --- โหมดอัปโหลดรูปภาพ ---
 if app_mode == "📤 อัปโหลดรูปภาพ":
@@ -70,7 +67,7 @@ if app_mode == "📤 อัปโหลดรูปภาพ":
     if uploaded_file:
         img = Image.open(uploaded_file)
         img_bgr = cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
-        # ส่งค่า HSV และ Threshold เข้าไปประมวลผล
+
         res_img, stats = process_rice_image(img_bgr, dist_threshold)
         
         with col_main:
@@ -101,15 +98,25 @@ else:
             
             while run_camera:
                 ret, frame = cap.read()
-                if not ret: break
+                if not ret:
+                    break
                 
-                # ส่งค่าจาก Slider เข้าไปในฟังก์ชัน realtime
-                res_img, stats = process_realtime(frame, h_range, s_range, v_range, yellow_threshold)
-                img_placeholder.image(cv2.cvtColor(res_img, cv2.COLOR_BGR2RGB), use_container_width=True)
+                # ✅ เรียกแบบใหม่ (ไม่มี yellow_sensitivity)
+                res_img, stats = process_realtime(
+                    frame,
+                    h_range,
+                    s_range,
+                    v_range
+                )
+
+                img_placeholder.image(
+                    cv2.cvtColor(res_img, cv2.COLOR_BGR2RGB),
+                    use_container_width=True
+                )
                 
                 with st_metrics.container():
                     display_filtered_stats(stats)
                 
             cap.release()
     else:
-        img_placeholder.info(f"จูนค่าสีทางซ้ายมือ และกดเปิดกล้องเพื่อเริ่มวิเคราะห์")
+        img_placeholder.info("จูนค่าสีทางซ้ายมือ และกดเปิดกล้องเพื่อเริ่มวิเคราะห์")
