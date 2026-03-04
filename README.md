@@ -19,7 +19,7 @@ A real-time computer vision solution designed to automate the quality control an
 
         🚀 Installation & Usage
         1. Clone the repository
-git clone https://github.com/YourUsername/Rice-Quality-Inspection-AI.git
+git clone https://github.com/TanapatSamudinkaew/Rice-Grading.git
 cd Rice-Quality-Inspection-AI
             
         2. Install Dependencies
