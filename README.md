@@ -29,7 +29,7 @@ pip install -r requirements.txt
 streamlit run app.py
 
     👥 Developers
-TanapatSamudinkaew
-kenkunanon
-Nawattakorn
+TanapatSamudinkaew,
+kenkunanon,
+Nawattakorn,
 Chris Pheraphon
